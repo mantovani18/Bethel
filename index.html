@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espaço Betel • Sistema de Gestão de Reservas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <img src="img/Logo.jpg" alt="Espaço Bethel" class="brand-logo" />
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">Espaço Bethel</div>
+        <div class="brand-sub">Sistema de Gestão de Reservas</div>
+      </div>
+    </div>
+    <button id="openNewReservation" class="primary">+ Nova Reserva</button>
+  </header>
+
+  <main class="layout">
+    <section class="calendar-card card">
+      <div class="calendar-header">
+        <button id="prevMonth" class="icon" aria-label="Mês anterior">‹</button>
+        <h2 id="currentMonth" class="month-title"></h2>
+        <button id="nextMonth" class="icon" aria-label="Próximo mês">›</button>
+      </div>
+      <div id="calendar" class="calendar" aria-label="Calendário"></div>
+      <div class="legend">
+        <span class="legend-item available">Disponível</span>
+        <span class="legend-item booked">Reservado</span>
+        <span class="legend-item past">Passado</span>
+      </div>
+      <div class="search card-light">
+        <h3>Buscar Disponibilidade</h3>
+        <div class="search-row">
+          <div class="search-field">
+            <span class="icon">📅</span>
+            <input id="searchDate" type="date" placeholder="dd/mm/aaaa" />
+          </div>
+          <button id="searchBtn" class="primary">
+            <span class="icon">🔍</span>
+            <span>Buscar</span>
+          </button>
+        </div>
+        <div id="searchResult" class="search-result"></div>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <section class="card">
+        <div class="sidebar-title">Próximas Reservas (<span id="upcomingCount">0</span>)</div>
+        <div id="upcomingList" class="upcoming-list"></div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="app-footer">
+    <small>Dados salvos localmente neste dispositivo (LocalStorage).</small>
+  </footer>
+
+  <div id="reservationModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Nova Reserva</h3>
+        <button id="closeModal" class="icon">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Data do Evento *</label>
+          <input id="formDate" type="date" />
+        </div>
+        <div class="form-row">
+          <label>Nome do Cliente *</label>
+          <input id="formName" type="text" placeholder="Nome completo" />
+        </div>
+        <div class="form-row">
+          <label>Telefone</label>
+          <input id="formPhone" type="text" placeholder="(00) 00000-0000" />
+        </div>
+        <div class="form-row">
+          <label>Tipo de Evento</label>
+          <select id="formType">
+            <option value="">Selecione...</option>
+            <option>Aniversário</option>
+            <option>Casamento</option>
+            <option>Conferência</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Observações</label>
+          <textarea id="formNotes" placeholder="Informações adicionais sobre a reserva"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelModal" class="secondary">Cancelar</button>
+        <button id="confirmReservation" class="primary">Confirmar Reserva</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
