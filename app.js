@@ -27,6 +27,8 @@
     formPhone: document.getElementById("formPhone"),
     formType: document.getElementById("formType"),
     formNotes: document.getElementById("formNotes"),
+    successNotification: document.getElementById("successNotification"),
+    notificationMessage: document.getElementById("notificationMessage"),
   };
 
   function ymd(year, monthIndex, day) {
@@ -181,13 +183,37 @@
 
   function confirmModal() {
     const rawDate = el.formDate.value.trim(); const name = el.formName.value.trim();
+    const phone = el.formPhone.value.trim();
+    
     if (!rawDate || !name) { alert("Preencha data e nome."); return; }
+    if (name.length < 3) { alert("Nome deve ter pelo menos 3 caracteres."); return; }
+    if (!/^[a-zA-Záàâäãåèéêëìíîïòóôöõùúûüýÿçñ\s]+$/.test(name)) { alert("Nome deve conter apenas letras."); return; }
+    
     const iso = rawDate.includes("-") ? rawDate : isoFromDMY(rawDate);
     if (!iso) { alert("Data inválida."); return; }
+    
+    const today = new Date();
+    const [y, m, d] = iso.split("-").map(Number);
+    const reserveDate = new Date(y, m - 1, d);
+    if (reserveDate < today) { alert("A data não pode ser no passado."); return; }
+    
+    if (phone && !/^\d{0,}$/.test(phone.replace(/[\s()-]/g, ""))) { alert("Telefone deve conter apenas números."); return; }
+    if (phone && phone.replace(/\D/g, "").length < 10) { alert("Telefone deve ter pelo menos 10 dígitos."); return; }
+    
     const id = Date.now();
-    state.reservations.push({ id, dateISO: iso, name, phone: el.formPhone.value.trim(), type: el.formType.value.trim(), notes: el.formNotes.value.trim() });
+    state.reservations.push({ id, dateISO: iso, name, phone: phone, type: el.formType.value.trim(), notes: el.formNotes.value.trim() });
     const dt = new Date(iso); const md = getMonthData(dt); md[iso] = { status: "booked" };
-    saveData(); closeModal(); render();
+    saveData(); closeModal(); render(); showSuccessNotification(name, iso);
+  }
+
+  function showSuccessNotification(name, iso) {
+    const formattedDate = formatLongDate(iso);
+    el.notificationMessage.textContent = `${name} • ${formattedDate}`;
+    el.successNotification.classList.remove("hidden");
+    
+    setTimeout(() => {
+      el.successNotification.classList.add("hidden");
+    }, 4000);
   }
 
   // Backup/import removidos junto das ferramentas visuais
@@ -239,6 +265,16 @@
   el.closeModal.addEventListener("click", closeModal);
   el.cancelModal.addEventListener("click", closeModal);
   el.confirmReservation.addEventListener("click", confirmModal);
+  
+  // Máscara para telefone
+  el.formPhone.addEventListener("input", (e) => {
+    let value = e.target.value.replace(/\D/g, "");
+    if (value.length > 11) value = value.slice(0, 11);
+    if (value.length === 0) { e.target.value = ""; }
+    else if (value.length <= 2) { e.target.value = value; }
+    else if (value.length <= 7) { e.target.value = `(${value.slice(0, 2)}) ${value.slice(2)}`; }
+    else { e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`; }
+  });
 
   // Initial render
   closeModal();
