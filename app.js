@@ -48,6 +48,10 @@
     if (!d || !m || !y) return null;
     return `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
   }
+  function dateFromISO(iso) {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
 
   function saveData() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
@@ -73,7 +77,7 @@
     return `${m.charAt(0).toUpperCase() + m.slice(1)} de ${d.getFullYear()}`;
   }
   function formatLongDate(iso) {
-    const dt = new Date(iso);
+    const dt = dateFromISO(iso);
     return dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
   }
   function daysInMonth(year, monthIndex) { return new Date(year, monthIndex + 1, 0).getDate(); }
@@ -151,7 +155,7 @@
 
     for (const r of upcoming) {
       const card = document.createElement("div"); card.className = "upcoming-card";
-      const dateRow = document.createElement("div"); dateRow.className = "row"; dateRow.textContent = new Date(r.dateISO).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }); card.appendChild(dateRow);
+      const dateRow = document.createElement("div"); dateRow.className = "row"; dateRow.textContent = dateFromISO(r.dateISO).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }); card.appendChild(dateRow);
       const nameRow = document.createElement("div"); nameRow.className = "row title"; nameRow.textContent = r.name; card.appendChild(nameRow);
       if (r.phone) { const phoneRow = document.createElement("div"); phoneRow.className = "row"; phoneRow.textContent = r.phone; card.appendChild(phoneRow); }
       if (r.type) { const typeRow = document.createElement("div"); typeRow.className = "row"; typeRow.textContent = r.type; card.appendChild(typeRow); }
@@ -167,7 +171,7 @@
     const idx = state.reservations.findIndex(x => x.id === id);
     if (idx >= 0) {
       const r = state.reservations[idx];
-      const monthData = getMonthData(new Date(r.dateISO));
+      const monthData = getMonthData(dateFromISO(r.dateISO));
       monthData[r.dateISO] = { status: "available" };
       state.reservations.splice(idx, 1);
       saveData(); render();
@@ -193,16 +197,16 @@
     if (!iso) { alert("Data inválida."); return; }
     
     const today = new Date();
-    const [y, m, d] = iso.split("-").map(Number);
-    const reserveDate = new Date(y, m - 1, d);
-    if (reserveDate < today) { alert("A data não pode ser no passado."); return; }
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const reserveDate = dateFromISO(iso);
+    if (reserveDate < todayDate) { alert("A data não pode ser no passado."); return; }
     
     if (phone && !/^\d{0,}$/.test(phone.replace(/[\s()-]/g, ""))) { alert("Telefone deve conter apenas números."); return; }
     if (phone && phone.replace(/\D/g, "").length < 10) { alert("Telefone deve ter pelo menos 10 dígitos."); return; }
     
     const id = Date.now();
     state.reservations.push({ id, dateISO: iso, name, phone: phone, type: el.formType.value.trim(), notes: el.formNotes.value.trim() });
-    const dt = new Date(iso); const md = getMonthData(dt); md[iso] = { status: "booked" };
+    const dt = dateFromISO(iso); const md = getMonthData(dt); md[iso] = { status: "booked" };
     saveData(); closeModal(); render(); showSuccessNotification(name, iso);
   }
 
@@ -223,7 +227,7 @@
     const iso = raw.includes("-") ? raw : isoFromDMY(raw);
     if (!iso) { el.searchResult.textContent = "Informe a data no formato dd/mm/aaaa."; return; }
 
-    const md = getMonthData(new Date(iso));
+    const md = getMonthData(dateFromISO(iso));
     const entry = md[iso];
     const reservation = state.reservations.find(r => r.dateISO === iso);
     const status = reservation ? "booked" : entry?.status || (isPastDate(iso) ? "past" : "available");
