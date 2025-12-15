@@ -58,7 +58,7 @@
   </main>
 
   <footer class="app-footer">
-    <small>Dados salvos localmente neste dispositivo (LocalStorage).</small>
+    <small>Direitos Reservados © 2025 Espaço Bethel</small>
   </footer>
 
   <div id="reservationModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -74,11 +74,11 @@
         </div>
         <div class="form-row">
           <label>Nome do Cliente *</label>
-          <input id="formName" type="text" placeholder="Nome completo" />
+          <input id="formName" type="text" placeholder="Nome completo" minlength="3" />
         </div>
         <div class="form-row">
           <label>Telefone</label>
-          <input id="formPhone" type="text" placeholder="(00) 00000-0000" />
+          <input id="formPhone" type="tel" placeholder="(00) 00000-0000" inputmode="numeric" maxlength="15" />
         </div>
         <div class="form-row">
           <label>Tipo de Evento</label>
@@ -98,6 +98,16 @@
       <div class="modal-footer">
         <button id="cancelModal" class="secondary">Cancelar</button>
         <button id="confirmReservation" class="primary">Confirmar Reserva</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="successNotification" class="notification notification-success hidden">
+    <div class="notification-content">
+      <span class="notification-icon">✓</span>
+      <div class="notification-text">
+        <p class="notification-title">Reserva Confirmada!</p>
+        <p class="notification-message" id="notificationMessage">Sua reserva foi feita com sucesso.</p>
       </div>
     </div>
   </div>
