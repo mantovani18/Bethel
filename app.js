@@ -27,6 +27,8 @@
     formPhone: document.getElementById("formPhone"),
     formType: document.getElementById("formType"),
     formNotes: document.getElementById("formNotes"),
+    formEditId: document.getElementById("formEditId"),
+    deleteReservation: document.getElementById("deleteReservation"),
     successNotification: document.getElementById("successNotification"),
     notificationMessage: document.getElementById("notificationMessage"),
   };
@@ -179,8 +181,33 @@
   }
 
   function openModal(prefillISO) {
-    el.formDate.value = prefillISO || ""; // input type=date espera yyyy-mm-dd
-    el.formName.value = ""; el.formPhone.value = ""; el.formType.value = ""; el.formNotes.value = "";
+    el.formEditId.value = ""; // Limpar ID de edição
+    el.deleteReservation.style.display = "none"; // Esconder botão deletar
+    const existingReservation = state.reservations.find(r => r.dateISO === prefillISO);
+    
+    if (existingReservation) {
+      // Modo edição: carregar dados da reserva existente
+      el.formDate.value = prefillISO;
+      el.formName.value = existingReservation.name;
+      el.formPhone.value = existingReservation.phone;
+      el.formType.value = existingReservation.type;
+      el.formNotes.value = existingReservation.notes;
+      el.formEditId.value = existingReservation.id;
+      document.getElementById("modalTitle").textContent = "Editar Reserva";
+      el.confirmReservation.textContent = "Salvar Alterações";
+      el.deleteReservation.style.display = "block";
+    } else {
+      // Modo nova reserva
+      el.formDate.value = prefillISO || "";
+      el.formName.value = "";
+      el.formPhone.value = "";
+      el.formType.value = "";
+      el.formNotes.value = "";
+      el.formEditId.value = "";
+      document.getElementById("modalTitle").textContent = "Nova Reserva";
+      el.confirmReservation.textContent = "Confirmar Reserva";
+    }
+    
     el.reservationModal.classList.remove("hidden");
   }
   function closeModal() { el.reservationModal.classList.add("hidden"); }
@@ -188,6 +215,7 @@
   function confirmModal() {
     const rawDate = el.formDate.value.trim(); const name = el.formName.value.trim();
     const phone = el.formPhone.value.trim();
+    const editId = el.formEditId.value;
     
     if (!rawDate || !name) { alert("Preencha data e nome."); return; }
     if (name.length < 3) { alert("Nome deve ter pelo menos 3 caracteres."); return; }
@@ -204,15 +232,34 @@
     if (phone && !/^\d{0,}$/.test(phone.replace(/[\s()-]/g, ""))) { alert("Telefone deve conter apenas números."); return; }
     if (phone && phone.replace(/\D/g, "").length < 10) { alert("Telefone deve ter pelo menos 10 dígitos."); return; }
     
-    const id = Date.now();
-    state.reservations.push({ id, dateISO: iso, name, phone: phone, type: el.formType.value.trim(), notes: el.formNotes.value.trim() });
-    const dt = dateFromISO(iso); const md = getMonthData(dt); md[iso] = { status: "booked" };
-    saveData(); closeModal(); render(); showSuccessNotification(name, iso);
+    if (editId) {
+      // Modo edição: atualizar reserva existente
+      const idx = state.reservations.findIndex(x => x.id == editId);
+      if (idx >= 0) {
+        const oldReservation = state.reservations[idx];
+        // Se data foi alterada, liberar data antiga e reservar a nova
+        if (oldReservation.dateISO !== iso) {
+          const oldMonthData = getMonthData(dateFromISO(oldReservation.dateISO));
+          oldMonthData[oldReservation.dateISO] = { status: "available" };
+          const newMonthData = getMonthData(dateFromISO(iso));
+          newMonthData[iso] = { status: "booked" };
+        }
+        state.reservations[idx] = { id: editId, dateISO: iso, name, phone, type: el.formType.value.trim(), notes: el.formNotes.value.trim() };
+        saveData(); closeModal(); render(); showSuccessNotification(name, iso, true);
+      }
+    } else {
+      // Modo nova reserva
+      const id = Date.now();
+      state.reservations.push({ id, dateISO: iso, name, phone: phone, type: el.formType.value.trim(), notes: el.formNotes.value.trim() });
+      const dt = dateFromISO(iso); const md = getMonthData(dt); md[iso] = { status: "booked" };
+      saveData(); closeModal(); render(); showSuccessNotification(name, iso, false);
+    }
   }
 
-  function showSuccessNotification(name, iso) {
+  function showSuccessNotification(name, iso, isEdit = false) {
     const formattedDate = formatLongDate(iso);
-    el.notificationMessage.textContent = `${name} • ${formattedDate}`;
+    const message = isEdit ? "Alterações salvas" : "Reserva confirmada";
+    el.notificationMessage.textContent = `${message} • ${name} • ${formattedDate}`;
     el.successNotification.classList.remove("hidden");
     
     setTimeout(() => {
@@ -269,6 +316,13 @@
   el.closeModal.addEventListener("click", closeModal);
   el.cancelModal.addEventListener("click", closeModal);
   el.confirmReservation.addEventListener("click", confirmModal);
+  el.deleteReservation.addEventListener("click", () => {
+    const editId = el.formEditId.value;
+    if (editId && confirm("Tem certeza que deseja deletar esta reserva?")) {
+      deleteReservation(editId);
+      closeModal();
+    }
+  });
   
   // Máscara para telefone
   el.formPhone.addEventListener("input", (e) => {
